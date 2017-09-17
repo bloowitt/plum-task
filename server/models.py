@@ -1,11 +1,9 @@
-import csv
-
-def data_file_path(filename):
-    from server.app import config
-    return app.config.DATA_PATH + '/' + filename
+import csv, os
 
 class ProductRepository:
-    def __init__(self):
+    def __init__(self, data_path):
+        def data_file_path(filename):
+            return os.path.join(data_path, filename)
         self.shops = dict()
         self._load_shops(data_file_path('shops.csv'))
         self._load_tags(data_file_path('tags.csv'), data_file_path('taggings.csv'))
@@ -28,7 +26,7 @@ class ProductRepository:
 
     def _order_products(self):
         for shop in self.shops:
-            shop.order_products()
+            self.shops[shop].order_products()
 
     def _load_tags(self, tags_file, taggings_file):
         tags_dict = dict()
@@ -52,7 +50,7 @@ class Shop(object):
         self.lat = float(lat)
         self.lng = float(lng)
         self._tags = set()
-        self.products = list()
+        self._products = list()
 
     @property
     def tags(self):
@@ -66,10 +64,10 @@ class Shop(object):
         return self._products
     
     def add_product(self, product):
-        self._products.add(product)
+        self._products.append(product)
 
     def order_products(self):
-        self._products = sorted(self._products, key=lambda x:x[1], reverse=True)
+        self._products = sorted(self._products, key=lambda x:x.popularity, reverse=True)
 
 class Product(object):
     __slots__ = 'title', 'popularity', 'quantity'

@@ -9,7 +9,8 @@ def create_app(settings_overrides=None):
     app = Flask(__name__)
     configure_settings(app, settings_overrides)
     configure_blueprints(app)
-    app.data_repository = ProductRepository()
+    with app.app_context():
+        app.data = ProductRepository(app.config.get('DATA_PATH'))
     return app
 
 
