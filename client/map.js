@@ -157,7 +157,26 @@
     this.prefs = prefs;
 
     this.search = function(cb) {
-      // TODO: Implement this.
+      if (this.prefs.tags.length){
+        const tagsStr = '&tags=' + this.prefs.tags.join(',');
+      } else {
+        const tagStr = '';
+      }
+      const urlParams = $.params({
+        lat: this.prefs.position.lat,
+        lng: this.prefs.position.lng,
+        radius: this.prefs.radius,
+        count: this.prefs.count
+      });
+      const url = '/search?' = $.params(urlParams) + tagsStr; 
+      $.getJSON(url).done(function (data) {
+        if('products' in data) {
+          return cb(null, data.products);
+        }
+        return cb(new Error('Server returned no products'));
+      }).fail(function(jqxhr, textStatus, error) {
+        return cb(error || textStatus || 'Error requesting data');
+      })
     };
   };
 
