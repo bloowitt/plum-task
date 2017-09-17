@@ -6,9 +6,9 @@ Also, thoughts on it
 1. How would your design change if the data was not static (i.e updated frequently
 during the day)?
 There are various options:
-1) Use a proper database of any kind and start querying that database. This has the disadvantage of not having everything in memory every time, which incurs in runtime penalties.
-2) Have some kind of push mechanism to inform the running instance it needs to reload data. 
-3) Just kill the instance and reload. If you are running more than one instance (as per the answer to 2), then it becomes a matter of orchestration and not of code. The worst case scenario is some users getting old data for an unspecified amount of time. 
+    1) Use a proper database of any kind and start querying that database. This has the disadvantage of not having everything in memory every time, which incurs in runtime penalties.
+    2) Have some kind of push mechanism to inform the running instance it needs to reload data. 
+    3) Just kill the instance and reload. If you are running more than one instance (as per the answer to 2), then it becomes a matter of orchestration and not of code. The worst case scenario is some users getting old data for an unspecified amount of time. 
 
 2. Do you think your design can handle 1000 concurrent requests per second? If not, what
 would you change?
