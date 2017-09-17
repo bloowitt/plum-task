@@ -1,10 +1,12 @@
 import csv, os
 
 class ProductRepository:
+    __slots__ = '_shops'
+
     def __init__(self, data_path):
         def data_file_path(filename):
             return os.path.join(data_path, filename)
-        self.shops = dict()
+        self._shops = dict()
         self._load_shops(data_file_path('shops.csv'))
         self._load_tags(data_file_path('tags.csv'), data_file_path('taggings.csv'))
         self._load_products(data_file_path('products.csv'))
@@ -15,18 +17,18 @@ class ProductRepository:
             reader = csv.reader(csv_file, delimiter=',', quotechar='"')
             assert next(reader) == ['id', 'name', 'lat', 'lng']
             for row in reader:
-                self.shops[row[0]] = Shop(row[1], row[2],row[3])
+                self._shops[row[0]] = Shop(row[1], row[2],row[3])
 
     def _load_products(self, filename):
         with open(filename, 'r') as csv_file:
             reader = csv.reader(csv_file, delimiter=',', quotechar='"')
             assert next(reader) == ['id', 'shop_id', 'title', 'popularity', 'quantity']
             for row in reader:
-                self.shops[row[1]].add_product(Product(row[2], row[3], row[4]))
+                self._shops[row[1]].add_product(Product(row[2], row[3], row[4]))
 
     def _order_products(self):
-        for shop in self.shops:
-            self.shops[shop].order_products()
+        for shop in self._shops:
+            self._shops[shop].order_products()
 
     def _load_tags(self, tags_file, taggings_file):
         tags_dict = dict()
@@ -40,7 +42,15 @@ class ProductRepository:
             reader = csv.reader(csv_file, delimiter=',', quotechar='"')
             assert next(reader) == ['id', 'shop_id', 'tag_id']
             for row in reader:
-                self.shops[row[1]].add_tag(tags_dict[row[2]])
+                self._shops[row[1]].add_tag(tags_dict[row[2]])
+
+    def get_filtered_products(self, lat, lng, radius, tags):
+        products_list = list()
+        for shop in self._shops:
+            for product in self._shops[shop].products:
+                products_list.append(product)    
+        return products_list
+            
 
 class Shop(object):
     __slots__ = 'id', 'name', 'lat', 'lng', '_tags', '_products'
@@ -76,3 +86,10 @@ class Product(object):
         self.title = title
         self.popularity = popularity
         self.quantity = quantity
+
+    def serialize(self): 
+        return {           
+            'title': self.title, 
+            'quantity': self.quantity,
+            'popularity': self.popularity
+        }

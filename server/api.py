@@ -19,10 +19,8 @@ def search():
         params = get_request_params_for_search(request.args)
     except Exception as e:
         raise BadRequest(e)
-    products = [];
-    # products =  current_app.shop_repository.get_roducts_with_filter(params[lat], 
-    #                                                                 params[lng], 
-    #                                                                 params[radius], 
-    #                                                                 params[count], 
-    #                                                                 params[tags])
-    return jsonify({'products': products})
+    products = current_app.data.get_filtered_products(params['lat'], 
+                                                        params['lng'], 
+                                                        params['radius'], 
+                                                        params['tags'])         
+    return jsonify({'products': [product.serialize() for product in products[0:params['count']]]})
