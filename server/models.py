@@ -1,15 +1,15 @@
 import csv
 
 def data_file_path(filename):
-    from app import config
+    from server.app import config
     return app.config.DATA_PATH + '/' + filename
 
 class ProductRepository:
     def __init__(self):
         self.shops = dict()
-        self._load_shop_data(data_file_path('shops.csv'))
+        self._load_shops(data_file_path('shops.csv'))
         self._load_tags(data_file_path('tags.csv'), data_file_path('taggings.csv'))
-        self._load_products(path_getter('products.csv'))
+        self._load_products(data_file_path('products.csv'))
         self._order_products()
 
     def _load_shops(self, filename):
@@ -17,31 +17,32 @@ class ProductRepository:
             reader = csv.reader(csv_file, delimiter=',', quotechar='"')
             assert next(reader) == ['id', 'name', 'lat', 'lng']
             for row in reader:
-                self.shops[row[0]] = new Shop(row[1], row[2],row[3])
+                self.shops[row[0]] = Shop(row[1], row[2],row[3])
 
     def _load_products(self, filename):
         with open(filename, 'r') as csv_file:
             reader = csv.reader(csv_file, delimiter=',', quotechar='"')
             assert next(reader) == ['id', 'shop_id', 'title', 'popularity', 'quantity']
             for row in reader:
-                self.shops[row[1]].add_product(new Product(row[2], row[3], row[4]))
+                self.shops[row[1]].add_product(Product(row[2], row[3], row[4]))
 
     def _order_products(self):
         for shop in self.shops:
             shop.order_products()
 
     def _load_tags(self, tags_file, taggings_file):
-        tags_dict = None
+        tags_dict = dict()
         with open(tags_file, 'r') as csv_file:
             reader = csv.reader(csv_file, delimiter=',', quotechar='"')
             assert next(reader) == ['id', 'tag']
-            tags_dict = {_id: tag for _id, tag in reader}
+            for row in reader:
+                tags_dict[row[0]] = row[1]
 
         with open(taggings_file, 'r') as csv_file:
             reader = csv.reader(csv_file, delimiter=',', quotechar='"')
             assert next(reader) == ['id', 'shop_id', 'tag_id']
-            for _, shop_id, tag_id in reader:
-            self.shops[shop_id].add_tag(tags_dict[tag_id])
+            for row in reader:
+                self.shops[row[1]].add_tag(tags_dict[row[2]])
 
 class Shop(object):
     __slots__ = 'id', 'name', 'lat', 'lng', '_tags', '_products'
@@ -69,3 +70,11 @@ class Shop(object):
 
     def order_products(self):
         self._products = sorted(self._products, key=lambda x:x[1], reverse=True)
+
+class Product(object):
+    __slots__ = 'title', 'popularity', 'quantity'
+
+    def __init__(self, title, popularity, quantity):
+        self.title = title
+        self.popularity = popularity
+        self.quantity = quantity

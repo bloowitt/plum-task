@@ -3,12 +3,13 @@
 import os
 from flask import Flask
 from server.api import api
-
+from models import ProductRepository
 
 def create_app(settings_overrides=None):
     app = Flask(__name__)
     configure_settings(app, settings_overrides)
     configure_blueprints(app)
+    app.data_repository = ProductRepository()
     return app
 
 
