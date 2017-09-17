@@ -99,3 +99,7 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# Files from the assignment I don't want to make public
+README-original.md
+THOUGHTS.md
