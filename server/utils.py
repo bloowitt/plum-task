@@ -23,8 +23,8 @@ def get_request_params_for_search(args):
     };
 
 def get_distance_m(lat1,lng1,lat2,lng2):
-    # Bonafide random number, got it from a die
-    return 5
+    from haversine import haversine
+    return haversine((lat1, lng1), (lat2,lng2)) * 1000
 
 def contains_tags(tag_set, container):
     if not tag_set or not len(tag_set):
