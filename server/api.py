@@ -22,5 +22,6 @@ def search():
     products = current_app.data.get_filtered_products(params['lat'], 
                                                         params['lng'], 
                                                         params['radius'], 
-                                                        params['tags'])         
+                                                        params['tags'],
+                                                        params['count'])         
     return jsonify({'products': [product.serialize() for product in products[0:params['count']]]})

@@ -21,3 +21,15 @@ def get_request_params_for_search(args):
         'count': count,
         'tags': tags
     };
+
+def get_distance_m(lat1,lng1,lat2,lng2):
+    # Bonafide random number, got it from a die
+    return 5
+
+def contains_tags(tag_set, container):
+    if not tag_set or not len(tag_set):
+        return True
+    for tag in tag_set:
+        if tag in container:
+            return True
+    return False

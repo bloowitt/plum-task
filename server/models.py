@@ -1,36 +1,26 @@
 import csv, os
 
 class ProductRepository:
-    __slots__ = '_shops'
+    __slots__ = '_products'
 
     def __init__(self, data_path):
         def data_file_path(filename):
             return os.path.join(data_path, filename)
-        self._shops = dict()
-        self._load_shops(data_file_path('shops.csv'))
-        self._load_tags(data_file_path('tags.csv'), data_file_path('taggings.csv'))
-        self._load_products(data_file_path('products.csv'))
-        self._order_products()
+        self._products = dict()
+        shops = self._load_shops(data_file_path('shops.csv'))
+        self._tag_shops(data_file_path('tags.csv'), data_file_path('taggings.csv'), shops)
+        self._products = self._load_products(data_file_path('products.csv'), shops)
 
     def _load_shops(self, filename):
         with open(filename, 'r') as csv_file:
             reader = csv.reader(csv_file, delimiter=',', quotechar='"')
             assert next(reader) == ['id', 'name', 'lat', 'lng']
+            shops_list_to_return = dict()
             for row in reader:
-                self._shops[row[0]] = Shop(row[1], row[2],row[3])
+                shops_list_to_return[row[0]] = Shop(row[1], row[2],row[3])
+            return shops_list_to_return
 
-    def _load_products(self, filename):
-        with open(filename, 'r') as csv_file:
-            reader = csv.reader(csv_file, delimiter=',', quotechar='"')
-            assert next(reader) == ['id', 'shop_id', 'title', 'popularity', 'quantity']
-            for row in reader:
-                self._shops[row[1]].add_product(Product(row[2], row[3], row[4]))
-
-    def _order_products(self):
-        for shop in self._shops:
-            self._shops[shop].order_products()
-
-    def _load_tags(self, tags_file, taggings_file):
+    def _tag_shops(self, tags_file, taggings_file, shops):
         tags_dict = dict()
         with open(tags_file, 'r') as csv_file:
             reader = csv.reader(csv_file, delimiter=',', quotechar='"')
@@ -42,25 +32,40 @@ class ProductRepository:
             reader = csv.reader(csv_file, delimiter=',', quotechar='"')
             assert next(reader) == ['id', 'shop_id', 'tag_id']
             for row in reader:
-                self._shops[row[1]].add_tag(tags_dict[row[2]])
+                shops[row[1]].add_tag(tags_dict[row[2]])
 
-    def get_filtered_products(self, lat, lng, radius, tags):
+    def _load_products(self, filename, shops):
+        product_list_to_return = list()
+        with open(filename, 'r') as csv_file:
+            reader = csv.reader(csv_file, delimiter=',', quotechar='"')
+            assert next(reader) == ['id', 'shop_id', 'title', 'popularity', 'quantity']
+            for row in reader:
+                shop_data = shops[row[1]]
+                product_list_to_return.append(Product(row[2], row[3], row[4], shop_data))
+        return sorted(product_list_to_return, key=lambda x:x.popularity, reverse=True)
+
+    def get_filtered_products(self, lat, lng, radius, tags, count):
+        from utils import contains_tags, get_distance_m
         products_list = list()
-        for shop in self._shops:
-            for product in self._shops[shop].products:
-                products_list.append(product)    
-        return products_list
-            
+        for cur_product in self._products:
+            #if is_acceptable_shop(cur_product.shop, lat, lng, radius, tags):
+            if not contains_tags(tags, cur_product.shop.tags):
+                continue
+            if get_distance_m(lat,lng,cur_product.shop.lat, cur_product.shop.lng) > radius:
+                continue        
+            products_list.append(cur_product)
+            if (len(products_list) >= count):
+                break
+        return products_list    
 
 class Shop(object):
-    __slots__ = 'id', 'name', 'lat', 'lng', '_tags', '_products'
+    __slots__ = 'name', 'lat', 'lng', '_tags'
 
     def __init__(self, name, lat, lng):
         self.name = name
         self.lat = float(lat)
         self.lng = float(lng)
         self._tags = set()
-        self._products = list()
 
     @property
     def tags(self):
@@ -69,27 +74,31 @@ class Shop(object):
     def add_tag(self, tag):
         self._tags.add(tag)
 
-    @property
-    def products(self):
-        return self._products
-    
-    def add_product(self, product):
-        self._products.append(product)
-
-    def order_products(self):
-        self._products = sorted(self._products, key=lambda x:x.popularity, reverse=True)
+    def serialize(self): 
+        return {           
+            'name' : self.name, 
+            'lat': self.lat, 
+            'lng': self.lng, 
+            'tags': [tag for tag in self.tags]
+        }
 
 class Product(object):
-    __slots__ = 'title', 'popularity', 'quantity'
+    __slots__ = 'title', 'popularity', 'quantity', '_shop'
 
-    def __init__(self, title, popularity, quantity):
+    def __init__(self, title, popularity, quantity, shop):
         self.title = title
         self.popularity = popularity
         self.quantity = quantity
+        self._shop = shop
+
+    @property
+    def shop(self):
+        return self._shop
 
     def serialize(self): 
         return {           
             'title': self.title, 
             'quantity': self.quantity,
-            'popularity': self.popularity
+            'popularity': self.popularity,
+            'shop': self.shop.serialize()
         }
